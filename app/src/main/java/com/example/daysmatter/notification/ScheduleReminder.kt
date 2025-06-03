@@ -24,8 +24,6 @@ fun scheduleReminder(context: Context, entity: AnniversaryEntity) {
         return // 不重复且已过期的纪念日不设置提醒
     }
 
-    if (entity.repeatType == 0 && finalTargetDate.isBefore(today)) return // 不重复且已过期
-
     val formatter = DateTimeFormatter.ISO_LOCAL_DATE
     val baseId="${entity.name}_${entity.targetDate}"
 
@@ -33,7 +31,7 @@ fun scheduleReminder(context: Context, entity: AnniversaryEntity) {
 
     if (!finalTargetDate.isBefore(today)) {
         val delayMillis = ChronoUnit.MILLIS.between(LocalDateTime.now(), finalTargetDate.atStartOfDay())
-        Log.d("Reminder", "On-day reminder delay: $delayMillis ms")
+//        Log.d("Reminder", "On-day reminder delay: $delayMillis ms")
 
         if (delayMillis > 0) {
             val onDayRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
@@ -50,6 +48,7 @@ fun scheduleReminder(context: Context, entity: AnniversaryEntity) {
                 ExistingWorkPolicy.REPLACE,
                 onDayRequest
             )
+            Log.d("Reminder", "Scheduled on-day reminder for ${entity.name} on ${finalTargetDate.format(formatter)}")
         }
     }
 
@@ -59,7 +58,7 @@ fun scheduleReminder(context: Context, entity: AnniversaryEntity) {
         val beforeDate = finalTargetDate.minusDays(entity.daysBeforeReminder.toLong())
         if (!beforeDate.isBefore(today)) {
             val beforeDelayMillis = ChronoUnit.MILLIS.between(LocalDateTime.now(), beforeDate.atStartOfDay())
-            Log.d("Reminder", "Before reminder delay: $beforeDelayMillis ms")
+//            Log.d("Reminder", "Before reminder delay: $beforeDelayMillis ms")
             if( beforeDelayMillis > 0) {
                 val beforeRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
                     .setInitialDelay(beforeDelayMillis, MILLISECONDS)
@@ -77,6 +76,7 @@ fun scheduleReminder(context: Context, entity: AnniversaryEntity) {
                     ExistingWorkPolicy.REPLACE,
                     beforeRequest
                 )
+                Log.d("Reminder", "Scheduled before reminder for ${entity.name} on ${beforeDate.format(formatter)}")
             }
         }
     }
@@ -94,7 +94,7 @@ fun scheduleReminder(context: Context, entity: AnniversaryEntity) {
                 ChronoUnit.MILLIS.between(LocalDateTime.now(), nextDate.atStartOfDay())
             }
 
-            Log.d("Reminder", "Periodic reminder initial delay: $initialDelay ms")
+//            Log.d("Reminder", "Periodic reminder initial delay: $initialDelay ms")
 
             if (initialDelay > 0) {
                 val intervalRequest = PeriodicWorkRequestBuilder<ReminderWorker>(
@@ -114,6 +114,7 @@ fun scheduleReminder(context: Context, entity: AnniversaryEntity) {
                     ExistingPeriodicWorkPolicy.REPLACE,
                     intervalRequest
                 )
+                Log.d("Reminder", "Scheduled periodic reminder for ${entity.name} every $intervalDays days starting from ${finalTargetDate.format(formatter)}")
             }
         }
     }
